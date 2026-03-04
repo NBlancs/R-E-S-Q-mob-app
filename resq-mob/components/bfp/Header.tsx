@@ -8,6 +8,7 @@ export default function Header() {
 
   const navItems = [
     { label: "Incident Map", route: "IncidentMap" },
+    { label: "Active Alerts", route: "AlertsList" },
   ];
 
   return (

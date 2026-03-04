@@ -10,6 +10,7 @@ import AdminCameraFeed from "../screens/admin/CameraFeed";
 import AdminProfile from "../screens/admin/Profile";
 import AdminReports from "../screens/admin/Reports";
 import BfpIncidentMap from "../screens/bfp/IncidentMap";
+import BfpAlertsList from "../screens/bfp/AlertsList";
 import BfpProfile from "../screens/bfp/Profile";
 
 const Stack = createNativeStackNavigator();
@@ -73,6 +74,11 @@ function BfpStack() {
         name="IncidentMap"
         component={BfpIncidentMap}
         options={{ title: "Incident Map" }}
+      />
+      <Stack.Screen
+        name="AlertsList"
+        component={BfpAlertsList}
+        options={{ title: "Active Alerts" }}
       />
       <Stack.Screen
         name="Profile"
