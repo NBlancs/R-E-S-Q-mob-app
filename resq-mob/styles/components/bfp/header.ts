@@ -4,19 +4,25 @@ import { responsiveFontSize, responsiveSize } from "../../../utils/responsive";
 export const headerStyles = StyleSheet.create({
   container: {
     backgroundColor: "#c41c3b",
-    paddingTop: responsiveSize(12),
+    paddingTop: responsiveSize(24),
     paddingHorizontal: responsiveSize(8),
+    paddingBottom: responsiveSize(8),
   },
   title: {
     fontSize: responsiveFontSize(20),
     fontWeight: "bold",
     color: "white",
     paddingHorizontal: responsiveSize(8),
-    marginBottom: responsiveSize(8),
+    marginBottom: responsiveSize(12),
+  },
+  navRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   navScroll: {
+    flex: 1,
     paddingHorizontal: responsiveSize(8),
-    marginBottom: responsiveSize(8),
   },
   navButton: {
     backgroundColor: "#8b1538",
@@ -29,5 +35,17 @@ export const headerStyles = StyleSheet.create({
     color: "white",
     fontWeight: "600",
     fontSize: responsiveFontSize(14),
+  },
+  profileButton: {
+    backgroundColor: "#8b1538",
+    paddingHorizontal: responsiveSize(12),
+    paddingVertical: responsiveSize(8),
+    borderRadius: responsiveSize(6),
+    marginRight: responsiveSize(8),
+  },
+  profileButtonText: {
+    color: "white",
+    fontWeight: "600",
+    fontSize: responsiveFontSize(13),
   },
 });
