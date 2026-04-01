@@ -1,15 +1,19 @@
 // screens/admin/CameraFeed.tsx
 import React from "react";
-import { View, Text } from "react-native";
-import { commonScreenStyles as styles } from "../../styles/screens/admin/commonScreenStyles";
+import { ScrollView, Text, View } from "react-native";
+import CameraFeedPanel from "../../components/admin/CameraFeedPanel";
 import Layout from "../../components/admin/Layout";
+import { cameraScreenStyles as styles } from "../../styles/screens/admin/camera";
 
 export default function CameraFeed() {
   return (
     <Layout>
-      <View style={styles.container}>
-        <Text style={styles.text}>Camera Feed (Admin Mock Screen)</Text>
-      </View>
+      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Live Camera Preview</Text>
+          <CameraFeedPanel />
+        </View>
+      </ScrollView>
     </Layout>
   );
 }

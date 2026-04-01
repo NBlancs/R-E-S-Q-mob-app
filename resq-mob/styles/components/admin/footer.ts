@@ -1,23 +1,25 @@
 import { StyleSheet } from "react-native";
 import { responsiveFontSize, responsiveSize } from "../../../utils/responsive";
+import { DOMAIN_COLORS } from "../../../constants/designTokens";
 
 export const footerStyles = StyleSheet.create({
   container: {
-    backgroundColor: "#0d3d52",
+    backgroundColor: DOMAIN_COLORS.admin.footerBackground,
     paddingVertical: responsiveSize(12),
     paddingHorizontal: responsiveSize(16),
   },
   content: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    justifyContent: "center",
     alignItems: "center",
   },
   text: {
     fontSize: responsiveFontSize(12),
-    color: "#aaa",
+    color: DOMAIN_COLORS.admin.footerText,
+    textAlign: "center",
   },
   logoutButton: {
-    backgroundColor: "#d32f2f",
+    backgroundColor: DOMAIN_COLORS.shared.logoutButtonBackground,
     paddingHorizontal: responsiveSize(12),
     paddingVertical: responsiveSize(6),
     borderRadius: responsiveSize(4),

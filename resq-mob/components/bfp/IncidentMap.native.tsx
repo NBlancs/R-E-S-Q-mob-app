@@ -8,12 +8,12 @@ import {
   ActivityIndicator,
   Animated,
   Dimensions,
-  AccessibilityInfo,
   ScrollView,
   TextInput,
   Alert,
 } from "react-native";
 import MapView, { Marker } from "react-native-maps";
+import { Ionicons } from "@expo/vector-icons";
 
 type IncidentMarker = {
   id: string;
@@ -270,9 +270,11 @@ export default function IncidentMap() {
         accessibilityLabel={addIncidentMode ? "Exit add incident mode" : "Add new incident"}
         accessibilityRole="button"
       >
-        <Text style={styles.addIncidentButtonText}>
-          {addIncidentMode ? "✕ Cancel" : "➕"}
-        </Text>
+        <Ionicons
+          name={addIncidentMode ? "close" : "add"}
+          size={24}
+          color="#ffffff"
+        />
       </TouchableOpacity>
 
       {/* Add Incident Mode Indicator */}
@@ -589,10 +591,6 @@ const styles = StyleSheet.create({
   },
   addIncidentButtonActive: {
     backgroundColor: "#cc0000",
-  },
-  addIncidentButtonText: {
-    fontSize: 24,
-    fontWeight: "600",
   },
   modeIndicator: {
     position: "absolute",

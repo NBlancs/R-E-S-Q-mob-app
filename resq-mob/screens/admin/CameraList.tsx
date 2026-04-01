@@ -1,15 +1,19 @@
 // screens/admin/CameraList.tsx
 import React from "react";
-import { View, Text } from "react-native";
-import { commonScreenStyles as styles } from "../../styles/screens/admin/commonScreenStyles";
+import { ScrollView, Text, View } from "react-native";
+import CameraPanel from "../../components/admin/CameraPanel";
 import Layout from "../../components/admin/Layout";
+import { cameraScreenStyles as styles } from "../../styles/screens/admin/camera";
 
 export default function CameraList() {
   return (
     <Layout>
-      <View style={styles.container}>
-        <Text style={styles.text}>Camera List (Admin Mock Screen)</Text>
-      </View>
+      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Available Cameras</Text>
+          <CameraPanel />
+        </View>
+      </ScrollView>
     </Layout>
   );
 }

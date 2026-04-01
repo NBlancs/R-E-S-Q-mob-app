@@ -12,6 +12,7 @@ import AdminReports from "../screens/admin/Reports";
 import BfpIncidentMap from "../screens/bfp/IncidentMap";
 import BfpAlertsList from "../screens/bfp/AlertsList";
 import BfpProfile from "../screens/bfp/Profile";
+import { SCREEN_NAMES } from "../constants/navigation";
 
 const Stack = createNativeStackNavigator();
 
@@ -22,7 +23,7 @@ function AuthStack() {
         headerShown: false,
       }}
     >
-      <Stack.Screen name="Login" component={Login} />
+      <Stack.Screen name={SCREEN_NAMES.LOGIN} component={Login} />
     </Stack.Navigator>
   );
 }
@@ -35,27 +36,27 @@ function AdminStack() {
       }}
     >
       <Stack.Screen
-        name="Overview"
+        name={SCREEN_NAMES.OVERVIEW}
         component={AdminOverview}
         options={{ title: "Admin Overview" }}
       />
       <Stack.Screen
-        name="CameraList"
+        name={SCREEN_NAMES.CAMERA_LIST}
         component={AdminCameraList}
         options={{ title: "Cameras" }}
       />
       <Stack.Screen
-        name="CameraFeed"
+        name={SCREEN_NAMES.CAMERA_FEED}
         component={AdminCameraFeed}
         options={{ title: "Camera Feed" }}
       />
       <Stack.Screen
-        name="Profile"
+        name={SCREEN_NAMES.PROFILE}
         component={AdminProfile}
         options={{ title: "Profile" }}
       />
       <Stack.Screen
-        name="Reports"
+        name={SCREEN_NAMES.REPORTS}
         component={AdminReports}
         options={{ title: "Reports" }}
       />
@@ -71,17 +72,17 @@ function BfpStack() {
       }}
     >
       <Stack.Screen
-        name="IncidentMap"
+        name={SCREEN_NAMES.INCIDENT_MAP}
         component={BfpIncidentMap}
         options={{ title: "Incident Map" }}
       />
       <Stack.Screen
-        name="AlertsList"
+        name={SCREEN_NAMES.ALERTS_LIST}
         component={BfpAlertsList}
         options={{ title: "Active Alerts" }}
       />
       <Stack.Screen
-        name="Profile"
+        name={SCREEN_NAMES.PROFILE}
         component={BfpProfile}
         options={{ title: "Profile" }}
       />
@@ -95,11 +96,11 @@ function RootNavigator() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       {userRole === null ? (
-        <Stack.Screen name="Auth" component={AuthStack} />
+        <Stack.Screen name={SCREEN_NAMES.AUTH_STACK} component={AuthStack} />
       ) : userRole === "admin" ? (
-        <Stack.Screen name="Admin" component={AdminStack} />
+        <Stack.Screen name={SCREEN_NAMES.ADMIN_STACK} component={AdminStack} />
       ) : (
-        <Stack.Screen name="Bfp" component={BfpStack} />
+        <Stack.Screen name={SCREEN_NAMES.BFP_STACK} component={BfpStack} />
       )}
     </Stack.Navigator>
   );

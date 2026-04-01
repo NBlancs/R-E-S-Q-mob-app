@@ -1,15 +1,19 @@
 // screens/admin/Reports.tsx
 import React from "react";
-import { View, Text } from "react-native";
-import { commonScreenStyles as styles } from "../../styles/screens/admin/commonScreenStyles";
+import { ScrollView, Text, View } from "react-native";
+import IncidentsTable from "../../components/admin/IncidentsTable";
 import Layout from "../../components/admin/Layout";
+import { reportsScreenStyles as styles } from "../../styles/screens/admin/reports";
 
 export default function Reports() {
   return (
     <Layout>
-      <View style={styles.container}>
-        <Text style={styles.text}>Reports (Admin Mock Screen)</Text>
-      </View>
+      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Report Incidents</Text>
+          <IncidentsTable />
+        </View>
+      </ScrollView>
     </Layout>
   );
 }
