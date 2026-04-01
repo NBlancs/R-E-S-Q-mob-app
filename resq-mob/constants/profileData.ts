@@ -30,7 +30,7 @@ export const BFP_PROFILE_DATA: OperationsProfileData = {
 
 export const ADMIN_PROFILE_DATA: OperationsProfileData = {
   id: "ADM-2026-RESQ",
-  name: "RESQ Command Desk",
+  name: "Administrator",
   rank: "Incident Administrator",
   station: "RESQ Central Operations",
   phone: "+63 xxx-xxx-1200",

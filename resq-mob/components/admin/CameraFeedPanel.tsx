@@ -1,6 +1,6 @@
 import React from "react";
 import { Text, View } from "react-native";
-import { ResizeMode, Video } from "expo-av";
+import { useVideoPlayer, VideoView } from "expo-video";
 import {
   ADMIN_CAMERA_FEED_EVENTS,
   type CameraFeedEvent,
@@ -22,6 +22,11 @@ export default function CameraFeedPanel({
   events = ADMIN_CAMERA_FEED_EVENTS,
 }: CameraFeedPanelProps) {
   const liveEvent = events[0];
+  const player = useVideoPlayer(require("../../assets/testvideo.mp4"), (videoPlayer) => {
+    videoPlayer.loop = true;
+    videoPlayer.muted = true;
+    videoPlayer.play();
+  });
 
   return (
     <View style={styles.container}>
@@ -29,15 +34,7 @@ export default function CameraFeedPanel({
 
       {liveEvent ? (
         <View style={styles.feedCard}>
-          <Video
-            source={require("../../assets/testvideo.mp4")}
-            style={styles.feedImage}
-            resizeMode={ResizeMode.COVER}
-            shouldPlay
-            isLooping
-            isMuted
-            useNativeControls
-          />
+          <VideoView style={styles.feedImage} contentFit="cover" player={player} nativeControls />
           <View style={styles.feedOverlay}>
             <Text style={styles.feedOverlayText}>
               {liveEvent.detection} {liveEvent.confidence.toFixed(2)}
