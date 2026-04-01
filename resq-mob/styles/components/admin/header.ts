@@ -1,9 +1,10 @@
 import { StyleSheet } from "react-native";
 import { responsiveFontSize, responsiveSize } from "../../../utils/responsive";
+import { DOMAIN_COLORS } from "../../../constants/designTokens";
 
 export const headerStyles = StyleSheet.create({
   container: {
-    backgroundColor: "#1a5f7a",
+    backgroundColor: DOMAIN_COLORS.admin.headerBackground,
     paddingTop: responsiveSize(24),
     paddingHorizontal: responsiveSize(8),
     paddingBottom: responsiveSize(8),
@@ -25,7 +26,7 @@ export const headerStyles = StyleSheet.create({
     paddingHorizontal: responsiveSize(8),
   },
   navButton: {
-    backgroundColor: "#0d3d52",
+    backgroundColor: DOMAIN_COLORS.admin.shellAccent,
     paddingHorizontal: responsiveSize(16),
     paddingVertical: responsiveSize(8),
     borderRadius: responsiveSize(6),
@@ -37,7 +38,7 @@ export const headerStyles = StyleSheet.create({
     fontSize: responsiveFontSize(14),
   },
   profileButton: {
-    backgroundColor: "#0d3d52",
+    backgroundColor: DOMAIN_COLORS.admin.shellAccent,
     paddingHorizontal: responsiveSize(12),
     paddingVertical: responsiveSize(8),
     borderRadius: responsiveSize(6),

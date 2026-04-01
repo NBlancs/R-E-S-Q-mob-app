@@ -8,7 +8,6 @@ import {
   ActivityIndicator,
   Animated,
   Dimensions,
-  AccessibilityInfo,
   ScrollView,
   TextInput,
   Alert,

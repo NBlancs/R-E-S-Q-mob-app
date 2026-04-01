@@ -1,7 +1,7 @@
 import { StyleSheet } from "react-native";
 import { responsiveFontSize, responsiveSize } from "../../../utils/responsive";
 
-export const systemStatusStyles = StyleSheet.create({
+export const cameraPanelStyles = StyleSheet.create({
   container: {
     padding: responsiveSize(12),
     backgroundColor: "#f3f4f6",
@@ -14,20 +14,28 @@ export const systemStatusStyles = StyleSheet.create({
     color: "#111827",
   },
   row: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
     backgroundColor: "#fff",
     borderRadius: responsiveSize(8),
     padding: responsiveSize(10),
     marginBottom: responsiveSize(8),
   },
-  serviceName: {
+  rowHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: responsiveSize(4),
+  },
+  cameraName: {
     fontSize: responsiveFontSize(13),
-    fontWeight: "600",
+    fontWeight: "700",
     color: "#1f2937",
   },
-  statusText: {
+  cameraMeta: {
+    fontSize: responsiveFontSize(12),
+    color: "#6b7280",
+    marginTop: responsiveSize(2),
+  },
+  chip: {
     fontSize: responsiveFontSize(12),
     fontWeight: "700",
   },
