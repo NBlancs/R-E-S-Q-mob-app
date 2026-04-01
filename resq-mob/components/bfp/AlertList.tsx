@@ -1,22 +1,29 @@
 import React from "react";
 import { View, Text } from "react-native";
+import {
+  ADMIN_CAMERA_NOTIFICATIONS,
+  type CameraDetectionNotification,
+} from "../../constants/adminCameras";
 import { alertListStyles as styles } from "../../styles/components/bfp/alertList";
 
-export default function AlertsList() {
-  const alerts = [
-    { id: 1, type: "High Priority", message: "Active incident in District 5" },
-    { id: 2, type: "Medium Priority", message: "Backup units requested" },
-    { id: 3, type: "Low Priority", message: "Routine patrol area check" },
-  ];
+interface AlertsListProps {
+  alerts?: CameraDetectionNotification[];
+}
 
+export default function AlertsList({
+  alerts = ADMIN_CAMERA_NOTIFICATIONS,
+}: AlertsListProps) {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Active Alerts</Text>
       {alerts.length > 0 ? (
         alerts.map((alert) => (
-          <Text key={alert.id} style={styles.text}>
-            • {alert.type}: {alert.message}
-          </Text>
+          <View key={alert.id} style={styles.alertCard}>
+            <Text style={styles.alertType}>{alert.detection.toUpperCase()}</Text>
+            <Text style={styles.alertMessage}>{alert.message}</Text>
+            <Text style={styles.text}>Camera: {alert.cameraName}</Text>
+            <Text style={styles.text}>Time: {alert.timestamp}</Text>
+          </View>
         ))
       ) : (
         <View style={styles.emptyState}>

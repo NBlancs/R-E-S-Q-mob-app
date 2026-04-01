@@ -18,7 +18,7 @@ export const BFP_PROFILE_DATA: OperationsProfileData = {
   station: "Bureau of Fire Protection - CDO",
   phone: "+63 xxx-xxx-xxxx",
   email: "cdo.station@bfp.gov.ph",
-  profilePicture: "https://via.placeholder.com/120",
+  profilePicture: "https://cdn-icons-png.flaticon.com/512/880/880590.png",
   incidents: 247,
   certifications: [
     "Emergency Response",
@@ -35,7 +35,7 @@ export const ADMIN_PROFILE_DATA: OperationsProfileData = {
   station: "RESQ Central Operations",
   phone: "+63 xxx-xxx-1200",
   email: "admin.operations@resq.app",
-  profilePicture: "https://via.placeholder.com/120",
+  profilePicture: "https://cdn-icons-png.flaticon.com/512/880/880590.png",
   incidents: 392,
   certifications: [
     "Emergency Coordination",

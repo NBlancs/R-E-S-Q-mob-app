@@ -16,6 +16,26 @@ export const alertListStyles = StyleSheet.create({
     color: "#c41c3b",
     marginBottom: responsiveSize(8),
   },
+  alertCard: {
+    backgroundColor: "#ffffff",
+    borderRadius: responsiveSize(8),
+    borderWidth: 1,
+    borderColor: "#f1b9c6",
+    padding: responsiveSize(10),
+    marginBottom: responsiveSize(8),
+  },
+  alertType: {
+    fontSize: responsiveFontSize(11),
+    fontWeight: "700",
+    color: "#c41c3b",
+    marginBottom: responsiveSize(4),
+  },
+  alertMessage: {
+    fontSize: responsiveFontSize(13),
+    color: "#303030",
+    marginBottom: responsiveSize(4),
+    lineHeight: responsiveFontSize(18),
+  },
   text: {
     fontSize: responsiveFontSize(13),
     color: "#555",
