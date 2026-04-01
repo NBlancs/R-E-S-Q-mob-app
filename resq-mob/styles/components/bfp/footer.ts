@@ -10,12 +10,13 @@ export const footerStyles = StyleSheet.create({
   },
   content: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    justifyContent: "center",
     alignItems: "center",
   },
   text: {
     fontSize: responsiveFontSize(12),
     color: DOMAIN_COLORS.bfp.footerText,
+    textAlign: "center",
   },
   logoutButton: {
     backgroundColor: DOMAIN_COLORS.shared.logoutButtonBackground,

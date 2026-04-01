@@ -1,6 +1,7 @@
 import React from "react";
-import { ScrollView, Text, TouchableOpacity, View, type StyleProp, type TextStyle, type ViewStyle } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { Text, View, type StyleProp, type TextStyle, type ViewStyle } from "react-native";
+import { useNavigation, useRoute } from "@react-navigation/native";
+import HamburgerSidebar from "./HamburgerSidebar";
 
 export interface DomainNavItem {
   label: string;
@@ -11,11 +12,8 @@ export interface DomainHeaderStyles {
   container: StyleProp<ViewStyle>;
   title: StyleProp<TextStyle>;
   navRow: StyleProp<ViewStyle>;
-  navScroll: StyleProp<ViewStyle>;
-  navButton: StyleProp<ViewStyle>;
-  navButtonText: StyleProp<TextStyle>;
-  profileButton: StyleProp<ViewStyle>;
-  profileButtonText: StyleProp<TextStyle>;
+  leftControls?: StyleProp<ViewStyle>;
+  rightControls?: StyleProp<ViewStyle>;
 }
 
 interface DomainHeaderProps {
@@ -23,6 +21,8 @@ interface DomainHeaderProps {
   navItems: DomainNavItem[];
   profileRoute: string;
   styles: DomainHeaderStyles;
+  rightAccessory?: React.ReactNode;
+  profileLabel?: string;
 }
 
 export default function DomainHeader({
@@ -30,36 +30,30 @@ export default function DomainHeader({
   navItems,
   profileRoute,
   styles,
+  rightAccessory,
+  profileLabel = "Profile",
 }: DomainHeaderProps) {
   const navigation = useNavigation<any>();
+  const route = useRoute();
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>{title}</Text>
-
       <View style={styles.navRow}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.navScroll}
-        >
-          {navItems.map((item) => (
-            <TouchableOpacity
-              key={item.route}
-              style={styles.navButton}
-              onPress={() => navigation.navigate(item.route)}
-            >
-              <Text style={styles.navButtonText}>{item.label}</Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+        <View style={styles.leftControls}>
+          <HamburgerSidebar
+            navItems={navItems}
+            activeRoute={route.name}
+            onNavigate={(targetRoute) => navigation.navigate(targetRoute)}
+            panelTitle={title}
+            profileRoute={profileRoute}
+            profileLabel={profileLabel}
+          />
+          <Text style={styles.title}>{title}</Text>
+        </View>
 
-        <TouchableOpacity
-          style={styles.profileButton}
-          onPress={() => navigation.navigate(profileRoute)}
-        >
-          <Text style={styles.profileButtonText}>Profile</Text>
-        </TouchableOpacity>
+        <View style={styles.rightControls}>
+          {rightAccessory}
+        </View>
       </View>
     </View>
   );

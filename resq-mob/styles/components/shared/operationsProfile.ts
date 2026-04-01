@@ -26,6 +26,20 @@ export const operationsProfileStyles = StyleSheet.create({
     borderWidth: 3,
     borderColor: "#0066cc",
   },
+  imageActionButton: {
+    borderWidth: 1,
+    borderColor: "#93c5fd",
+    backgroundColor: "#eff6ff",
+    borderRadius: 999,
+    paddingHorizontal: responsiveSize(14),
+    paddingVertical: responsiveSize(8),
+    marginBottom: responsiveSize(10),
+  },
+  imageActionButtonText: {
+    color: "#1d4ed8",
+    fontSize: responsiveFontSize(12),
+    fontWeight: "700",
+  },
   profileName: {
     fontSize: responsiveFontSize(22),
     fontWeight: "700",
@@ -104,6 +118,33 @@ export const operationsProfileStyles = StyleSheet.create({
     backgroundColor: "#f3f4f6",
     marginHorizontal: responsiveSize(16),
   },
+  formField: {
+    paddingHorizontal: responsiveSize(16),
+    paddingVertical: responsiveSize(12),
+    gap: responsiveSize(8),
+  },
+  formInput: {
+    borderWidth: 1,
+    borderColor: "#d1d5db",
+    borderRadius: 8,
+    paddingHorizontal: responsiveSize(12),
+    paddingVertical: responsiveSize(10),
+    fontSize: responsiveFontSize(13),
+    color: "#1f2937",
+    backgroundColor: "#ffffff",
+  },
+  saveButton: {
+    marginTop: responsiveSize(12),
+    backgroundColor: "#2563eb",
+    borderRadius: 8,
+    paddingVertical: responsiveSize(12),
+    alignItems: "center",
+  },
+  saveButtonText: {
+    color: "#ffffff",
+    fontSize: responsiveFontSize(14),
+    fontWeight: "700",
+  },
 
   statsGrid: {
     flexDirection: "row",
@@ -168,79 +209,6 @@ export const operationsProfileStyles = StyleSheet.create({
     fontSize: responsiveFontSize(13),
     fontWeight: "600",
     color: "#1f2937",
-  },
-
-  logoutButton: {
-    marginHorizontal: responsiveSize(12),
-    marginVertical: responsiveSize(12),
-    paddingVertical: responsiveSize(14),
-    backgroundColor: "#fee2e2",
-    borderRadius: 8,
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#fca5a5",
-  },
-  logoutButtonText: {
-    fontSize: responsiveFontSize(14),
-    fontWeight: "700",
-    color: "#991b1b",
-  },
-
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: responsiveSize(16),
-  },
-  confirmationModal: {
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    paddingHorizontal: responsiveSize(20),
-    paddingVertical: responsiveSize(24),
-    width: "100%",
-    maxWidth: 300,
-  },
-  confirmationTitle: {
-    fontSize: responsiveFontSize(16),
-    fontWeight: "700",
-    color: "#1f2937",
-    marginBottom: responsiveSize(12),
-  },
-  confirmationMessage: {
-    fontSize: responsiveFontSize(13),
-    color: "#6b7280",
-    lineHeight: 20,
-    marginBottom: responsiveSize(20),
-  },
-  modalActions: {
-    flexDirection: "row",
-    gap: responsiveSize(12),
-  },
-  cancelButton: {
-    flex: 1,
-    paddingVertical: responsiveSize(10),
-    borderWidth: 1,
-    borderColor: "#d1d5db",
-    borderRadius: 6,
-    alignItems: "center",
-  },
-  cancelButtonText: {
-    fontSize: responsiveFontSize(13),
-    fontWeight: "600",
-    color: "#4b5563",
-  },
-  confirmButton: {
-    flex: 1,
-    paddingVertical: responsiveSize(10),
-    backgroundColor: "#991b1b",
-    borderRadius: 6,
-    alignItems: "center",
-  },
-  confirmButtonText: {
-    fontSize: responsiveFontSize(13),
-    fontWeight: "600",
-    color: "#fff",
   },
 
   bottomPadding: {

@@ -16,7 +16,8 @@ export const SCREEN_NAMES = {
 
 export const ADMIN_NAV_ITEMS: DomainNavItem[] = [
   { label: "Overview", route: SCREEN_NAMES.OVERVIEW },
-  { label: "Cameras", route: SCREEN_NAMES.CAMERA_LIST },
+  { label: "Camera Feed", route: SCREEN_NAMES.CAMERA_FEED },
+  { label: "Camera List", route: SCREEN_NAMES.CAMERA_LIST },
   { label: "Reports", route: SCREEN_NAMES.REPORTS },
 ];
 
