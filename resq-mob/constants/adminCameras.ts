@@ -2,6 +2,7 @@ export type CameraStatus = "online" | "offline" | "maintenance";
 export type CameraDetection = "fire" | "gas" | "smoke" | "none";
 
 export interface CameraItem {
+  backendId?: number;
   id: string;
   name: string;
   location: string;

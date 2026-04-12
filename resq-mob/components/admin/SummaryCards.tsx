@@ -6,9 +6,15 @@ import {
   ADMIN_RESPONSE_STATUS,
   ADMIN_SENSOR_BREAKDOWN,
 } from "../../constants/adminReports";
+import type { SystemOverview } from "../../services/api";
 import { summaryCardsStyles as styles } from "../../styles/components/admin/summaryCards";
 
-export default function SummaryCards() {
+interface SummaryCardsProps {
+  overview?: SystemOverview | null;
+  loadingOverview?: boolean;
+}
+
+export default function SummaryCards({ overview, loadingOverview = false }: SummaryCardsProps) {
   const { width } = useWindowDimensions();
   const chartWidth = Math.max(220, Math.min(width - 82, 420));
 
@@ -43,6 +49,39 @@ export default function SummaryCards() {
 
   return (
     <View style={styles.container}>
+      <View style={styles.card}>
+        <Text style={styles.title}>Live System Overview</Text>
+        <Text style={styles.subtitle}>
+          {loadingOverview ? "Refreshing from backend..." : "Counts synchronized from the backend API"}
+        </Text>
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10, marginTop: 10 }}>
+          <View style={{ minWidth: 120, backgroundColor: "#f8fafc", padding: 10, borderRadius: 8 }}>
+            <Text style={{ color: "#64748b", fontSize: 12 }}>Cameras</Text>
+            <Text style={{ color: "#0f172a", fontSize: 18, fontWeight: "700" }}>
+              {overview?.camera_count ?? "-"}
+            </Text>
+          </View>
+          <View style={{ minWidth: 120, backgroundColor: "#f8fafc", padding: 10, borderRadius: 8 }}>
+            <Text style={{ color: "#64748b", fontSize: 12 }}>Incidents</Text>
+            <Text style={{ color: "#0f172a", fontSize: 18, fontWeight: "700" }}>
+              {overview?.incident_count ?? "-"}
+            </Text>
+          </View>
+          <View style={{ minWidth: 120, backgroundColor: "#f8fafc", padding: 10, borderRadius: 8 }}>
+            <Text style={{ color: "#64748b", fontSize: 12 }}>Open / Investigating</Text>
+            <Text style={{ color: "#b91c1c", fontSize: 18, fontWeight: "700" }}>
+              {overview?.open_incidents ?? "-"}
+            </Text>
+          </View>
+          <View style={{ minWidth: 120, backgroundColor: "#f8fafc", padding: 10, borderRadius: 8 }}>
+            <Text style={{ color: "#64748b", fontSize: 12 }}>Resolved</Text>
+            <Text style={{ color: "#15803d", fontSize: 18, fontWeight: "700" }}>
+              {overview?.resolved_incidents ?? "-"}
+            </Text>
+          </View>
+        </View>
+      </View>
+
       <View style={styles.card}>
         <Text style={styles.title}>Temperature &amp; Air Quality Trends</Text>
         <Text style={styles.subtitle}>Average values across key zones (last 24 hours)</Text>

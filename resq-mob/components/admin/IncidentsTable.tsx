@@ -1,5 +1,6 @@
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  Alert,
   Modal,
   Platform,
   Pressable,
@@ -15,6 +16,18 @@ import {
   ADMIN_INCIDENT_REPORTS,
   type IncidentReportItem,
 } from "../../constants/adminReports";
+import { useAuth } from "../../hooks/useAuth";
+import {
+  ApiError,
+  createIncident,
+  deleteIncident,
+  listIncidents,
+  updateIncident,
+  type DetectionMethod,
+  type IncidentDto,
+  type IncidentPayload,
+  type IncidentType,
+} from "../../services/api";
 import { incidentsTableStyles as styles } from "../../styles/components/admin/incidentsTable";
 
 interface IncidentsTableProps {
@@ -30,13 +43,126 @@ const statusColorMap: Record<IncidentReportItem["status"], string> = {
   resolved: "#31c26a",
 };
 
+const typeLabelFromValue: Record<IncidentType, IncidentReportItem["type"]> = {
+  fire: "Fire",
+  gas: "Gas",
+  smoke: "Smoke",
+  other: "Other",
+};
+
+const typeValueFromLabel: Record<IncidentReportItem["type"], IncidentType> = {
+  Fire: "fire",
+  Gas: "gas",
+  Smoke: "smoke",
+  Other: "other",
+};
+
+const methodLabelFromValue: Record<DetectionMethod, IncidentReportItem["method"]> = {
+  heat_sensor: "Heat Sensor",
+  camera_ai: "Camera AI",
+  gas_sensor: "Gas Sensor",
+  manual: "Manual",
+};
+
+const methodValueFromLabel: Record<IncidentReportItem["method"], DetectionMethod> = {
+  "Heat Sensor": "heat_sensor",
+  "Camera AI": "camera_ai",
+  "Gas Sensor": "gas_sensor",
+  Manual: "manual",
+};
+
+const toDisplayTime = (value: Date) => {
+  const hours = value.getHours();
+  const minutes = String(value.getMinutes()).padStart(2, "0");
+  const suffix = hours >= 12 ? "PM" : "AM";
+  const normalizedHours = hours % 12 || 12;
+  return `${String(normalizedHours).padStart(2, "0")}:${minutes} ${suffix}`;
+};
+
+const toDisplayDate = (value: Date) => {
+  const year = value.getFullYear();
+  const month = String(value.getMonth() + 1).padStart(2, "0");
+  const day = String(value.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+const mapIncidentDtoToRow = (incident: IncidentDto): IncidentReportItem => {
+  const parsed = new Date(incident.time_reported);
+  const hasValidDate = !Number.isNaN(parsed.getTime());
+  const date = hasValidDate ? toDisplayDate(parsed) : incident.time_reported.slice(0, 10);
+  const time = hasValidDate ? toDisplayTime(parsed) : "09:00 AM";
+
+  return {
+    backendId: incident.id,
+    incidentCode: incident.incident_code,
+    id: `#${incident.incident_code}`,
+    type: typeLabelFromValue[incident.incident_type],
+    location: incident.location,
+    method: methodLabelFromValue[incident.detection_method],
+    date,
+    time,
+    status: incident.status,
+  };
+};
+
+const parse12HourTime = (value: string) => {
+  const cleaned = value.trim().toUpperCase();
+  const match = cleaned.match(/^(\d{1,2}):(\d{2})(?:\s*(AM|PM))?$/);
+  if (!match) {
+    return { hours: 9, minutes: 0 };
+  }
+
+  let hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  const suffix = match[3];
+
+  if (suffix === "AM") {
+    hours = hours === 12 ? 0 : hours;
+  }
+
+  if (suffix === "PM") {
+    hours = hours === 12 ? 12 : hours + 12;
+  }
+
+  if (!suffix && hours > 23) {
+    hours = 9;
+  }
+
+  return {
+    hours,
+    minutes: Number.isNaN(minutes) ? 0 : Math.max(0, Math.min(59, minutes)),
+  };
+};
+
+const toBackendTime = (dateValue: string, timeValue: string) => {
+  const validDate = /^\d{4}-\d{2}-\d{2}$/.test(dateValue) ? dateValue : toDisplayDate(new Date());
+  const { hours, minutes } = parse12HourTime(timeValue);
+  return `${validDate}T${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:00`;
+};
+
+const getNextIncidentCode = (rows: IncidentReportItem[]) => {
+  const maxValue = rows.reduce((max, row) => {
+    const source = row.incidentCode || row.id.replace(/^#/, "");
+    const match = source.match(/^INC-(\d+)$/i);
+    if (!match) {
+      return max;
+    }
+    return Math.max(max, Number(match[1]));
+  }, 0);
+
+  return `INC-${String(maxValue + 1).padStart(3, "0")}`;
+};
+
 export default function IncidentsTable({
   incidents = ADMIN_INCIDENT_REPORTS,
 }: IncidentsTableProps) {
+  const { token } = useAuth();
   const { width } = useWindowDimensions();
   const isMobile = width < 940;
 
   const [rows, setRows] = useState<IncidentReportItem[]>(incidents);
+  const [isLoading, setIsLoading] = useState(false);
+  const [syncError, setSyncError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | IncidentReportItem["status"]>("all");
   const [dayFilter, setDayFilter] = useState("");
@@ -49,7 +175,7 @@ export default function IncidentsTable({
   const [pickerDate, setPickerDate] = useState(new Date());
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState<Omit<IncidentReportItem, "id">>({
+  const [form, setForm] = useState<Omit<IncidentReportItem, "id" | "backendId" | "incidentCode">>({
     type: "Fire",
     location: "",
     method: "Heat Sensor",
@@ -57,6 +183,33 @@ export default function IncidentsTable({
     date: "2026-02-24",
     status: "open",
   });
+
+  const loadIncidentsFromApi = useCallback(async () => {
+    if (!token) {
+      return;
+    }
+
+    setIsLoading(true);
+    setSyncError(null);
+    try {
+      const response = await listIncidents(token);
+      setRows(response.map(mapIncidentDtoToRow));
+    } catch (error) {
+      const message = error instanceof ApiError ? error.message : "Failed to load incidents.";
+      setSyncError(message);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [token]);
+
+  useEffect(() => {
+    if (!token) {
+      setSyncError("Sign in to load live incident data.");
+      return;
+    }
+
+    void loadIncidentsFromApi();
+  }, [loadIncidentsFromApi, token]);
 
   const filteredRows = useMemo(() => {
     return rows.filter((row) => {
@@ -204,31 +357,78 @@ export default function IncidentsTable({
     setModalOpen(true);
   };
 
-  const saveIncident = () => {
-    if (!form.location.trim()) {
+  const saveIncident = async () => {
+    if (!token) {
+      Alert.alert("Not Signed In", "Please sign in first.");
       return;
     }
 
-    if (editingId) {
-      setRows((prev) => prev.map((row) => (row.id === editingId ? { ...row, ...form } : row)));
-    } else {
-      const values = rows
-        .map((row) => Number(row.id.replace("#INC-", "")))
-        .filter((value) => !Number.isNaN(value));
-      const next = String((Math.max(0, ...values) + 1)).padStart(3, "0");
-      setRows((prev) => [...prev, { id: `#INC-${next}`, ...form }]);
+    if (!form.location.trim()) {
+      Alert.alert("Validation", "Location is required.");
+      return;
     }
 
-    setModalOpen(false);
+    const currentRow = editingId ? rows.find((row) => row.id === editingId) : null;
+    const incidentCode = currentRow?.incidentCode || getNextIncidentCode(rows);
+    const payload: IncidentPayload = {
+      incident_code: incidentCode,
+      incident_type: typeValueFromLabel[form.type],
+      location: form.location.trim(),
+      detection_method: methodValueFromLabel[form.method],
+      time_reported: toBackendTime(form.date, form.time),
+      status: form.status,
+      camera: null,
+      notes: "",
+    };
+
+    setIsLoading(true);
+    setSyncError(null);
+    try {
+      if (currentRow?.backendId) {
+        await updateIncident(token, currentRow.backendId, payload);
+      } else {
+        await createIncident(token, payload);
+      }
+
+      await loadIncidentsFromApi();
+      setModalOpen(false);
+    } catch (error) {
+      const message = error instanceof ApiError ? error.message : "Failed to save incident.";
+      Alert.alert("Save Failed", message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const removeIncident = (id: string) => {
-    setRows((prev) => prev.filter((row) => row.id !== id));
+  const removeIncident = async (row: IncidentReportItem) => {
+    if (!token) {
+      Alert.alert("Not Signed In", "Please sign in first.");
+      return;
+    }
+
+    if (!row.backendId) {
+      setRows((prev) => prev.filter((item) => item.id !== row.id));
+      return;
+    }
+
+    setIsLoading(true);
+    setSyncError(null);
+    try {
+      await deleteIncident(token, row.backendId);
+      await loadIncidentsFromApi();
+    } catch (error) {
+      const message = error instanceof ApiError ? error.message : "Failed to delete incident.";
+      Alert.alert("Delete Failed", message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <View style={styles.container}>
       <Text style={styles.heading}>Recent Incidents</Text>
+      {isLoading ? <Text style={{ color: "#475569", marginBottom: 8 }}>Syncing with backend...</Text> : null}
+      {syncError ? <Text style={{ color: "#b91c1c", marginBottom: 8 }}>{syncError}</Text> : null}
 
       <View style={styles.filtersRow}>
         <TextInput
@@ -284,7 +484,7 @@ export default function IncidentsTable({
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.deleteButton}
-                  onPress={() => removeIncident(incident.id)}
+                  onPress={() => void removeIncident(incident)}
                 >
                   <Text style={styles.actionButtonText}>Delete</Text>
                 </TouchableOpacity>
@@ -327,7 +527,7 @@ export default function IncidentsTable({
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={styles.deleteButton}
-                    onPress={() => removeIncident(incident.id)}
+                    onPress={() => void removeIncident(incident)}
                   >
                     <Text style={styles.actionButtonText}>Delete</Text>
                   </TouchableOpacity>
@@ -371,13 +571,14 @@ export default function IncidentsTable({
                 onPress={() =>
                   setForm((prev) => ({
                     ...prev,
-                    type: prev.type === "Fire" ? "Gas" : "Fire",
-                    method:
+                    type:
                       prev.type === "Fire"
-                        ? "Gas Sensor"
-                        : prev.method === "Gas Sensor"
-                          ? "Heat Sensor"
-                          : prev.method,
+                        ? "Gas"
+                        : prev.type === "Gas"
+                          ? "Smoke"
+                          : prev.type === "Smoke"
+                            ? "Other"
+                            : "Fire",
                   }))
                 }
               >
@@ -391,6 +592,7 @@ export default function IncidentsTable({
                     "Heat Sensor",
                     "Camera AI",
                     "Gas Sensor",
+                    "Manual",
                   ];
                   const index = methods.indexOf(form.method);
                   setForm((prev) => ({ ...prev, method: methods[(index + 1) % methods.length] }));

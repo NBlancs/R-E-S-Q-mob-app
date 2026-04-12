@@ -20,10 +20,10 @@ interface OperationsProfileProps {
 }
 
 export default function OperationsProfile({ profileData }: OperationsProfileProps) {
-  const { userRole, credentials, updateCredentials } = useAuth();
+  const { profile } = useAuth();
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [locationTrackingEnabled, setLocationTrackingEnabled] = useState(true);
-  const initialRoleEmail = userRole ? credentials[userRole].email : profileData.email;
+  const initialRoleEmail = profile?.email || profileData.email;
   const [profileImageUri, setProfileImageUri] = useState(profileData.profilePicture);
   const [email, setEmail] = useState(initialRoleEmail);
   const [contactInfo, setContactInfo] = useState(profileData.phone);
@@ -63,6 +63,12 @@ export default function OperationsProfile({ profileData }: OperationsProfileProp
     void loadProfileOverrides();
   }, [storageKey]);
 
+  useEffect(() => {
+    if (profile?.email) {
+      setEmail(profile.email);
+    }
+  }, [profile?.email]);
+
   const handleSelectImage = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
@@ -88,29 +94,11 @@ export default function OperationsProfile({ profileData }: OperationsProfileProp
       return;
     }
 
-    if (userRole) {
-      const existing = credentials[userRole];
-      const emailChanged = email.trim() !== existing.email;
-      const passwordChanged = newPassword.trim().length > 0;
-
-      if (emailChanged || passwordChanged) {
-        if (!currentPassword.trim()) {
-          Alert.alert("Current Password Required", "Enter your current password to update account credentials.");
-          return;
-        }
-
-        const result = updateCredentials({
-          role: userRole,
-          currentPassword: currentPassword.trim(),
-          newEmail: email.trim(),
-          newPassword: passwordChanged ? newPassword.trim() : undefined,
-        });
-
-        if (!result.success) {
-          Alert.alert("Update Failed", result.message);
-          return;
-        }
-      }
+    if (currentPassword.trim() || newPassword.trim()) {
+      Alert.alert(
+        "Not Available",
+        "Password updates are not connected to the backend yet. Only local profile fields will be saved.",
+      );
     }
 
     try {

@@ -1,6 +1,7 @@
 // app/_layout.tsx
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { Text, View } from "react-native";
 import { AuthProvider, useAuth } from "../hooks/useAuth";
 import ErrorBoundary from "../components/ErrorBoundary";
 import Login from "./auth/login";
@@ -91,7 +92,15 @@ function BfpStack() {
 }
 
 function RootNavigator() {
-  const { userRole } = useAuth();
+  const { isLoading, userRole } = useAuth();
+
+  if (isLoading) {
+    return (
+      <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+        <Text>Loading session...</Text>
+      </View>
+    );
+  }
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>

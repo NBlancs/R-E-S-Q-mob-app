@@ -10,18 +10,18 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (!email || !password) {
       Alert.alert("Validation Error", "Please enter both email and password.");
       return;
     }
 
     setLoading(true);
-    const success = login(email, password);
+    const result = await login(email, password);
     setLoading(false);
 
-    if (!success) {
-      Alert.alert("Invalid Credentials", "Please check your email and password.");
+    if (!result.success) {
+      Alert.alert("Login Failed", result.message);
     }
   };
 

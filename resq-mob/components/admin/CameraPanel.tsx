@@ -1,5 +1,6 @@
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
+	Alert,
 	Modal,
 	Pressable,
 	ScrollView,
@@ -16,6 +17,16 @@ import {
 	type CameraItem,
 	type CameraStatus,
 } from "../../constants/adminCameras";
+import { useAuth } from "../../hooks/useAuth";
+import {
+	ApiError,
+	createCamera,
+	deleteCamera,
+	listCameras,
+	updateCamera,
+	type CameraDto,
+	type CameraPayload,
+} from "../../services/api";
 import { cameraPanelStyles as styles } from "../../styles/components/admin/cameraPanel";
 
 interface CameraPanelProps {
@@ -30,13 +41,61 @@ const cameraStatusColorMap: Record<CameraItem["status"], string> = {
 	maintenance: "#f39c12",
 };
 
+const DEFAULT_FOOTAGE_URL =
+	"https://images.pexels.com/photos/1118866/pexels-photo-1118866.jpeg?auto=compress&cs=tinysrgb&w=1600";
+
+const formatDateTime = (value: string) => {
+	if (!value) {
+		return "";
+	}
+
+	const parsed = new Date(value);
+	if (Number.isNaN(parsed.getTime())) {
+		return value.replace("T", " ").slice(0, 16);
+	}
+
+	const year = parsed.getFullYear();
+	const month = String(parsed.getMonth() + 1).padStart(2, "0");
+	const day = String(parsed.getDate()).padStart(2, "0");
+	const hours = String(parsed.getHours()).padStart(2, "0");
+	const minutes = String(parsed.getMinutes()).padStart(2, "0");
+	return `${year}-${month}-${day} ${hours}:${minutes}`;
+};
+
+const mapCameraDtoToItem = (camera: CameraDto): CameraItem => ({
+	backendId: camera.id,
+	id: camera.camera_code,
+	name: camera.name,
+	location: camera.location,
+	status: camera.status,
+	lastActive: formatDateTime(camera.last_active),
+	onlineDuration: "-",
+	activeRange: "24h",
+	footageUrl: camera.footage_url || DEFAULT_FOOTAGE_URL,
+});
+
+const getNextCameraCode = (cameraRows: CameraItem[]) => {
+	const maxValue = cameraRows.reduce((max, camera) => {
+		const match = camera.id.match(/^CAM-(\d+)$/i);
+		if (!match) {
+			return max;
+		}
+		return Math.max(max, Number(match[1]));
+	}, 0);
+
+	return `CAM-${String(maxValue + 1).padStart(3, "0")}`;
+};
+
 export default function CameraPanel({
 	cameras = ADMIN_CAMERA_UNITS,
 }: CameraPanelProps) {
+	const { token } = useAuth();
 	const { width } = useWindowDimensions();
 	const isMobile = width < 900;
 
 	const [cameraRows, setCameraRows] = useState<CameraItem[]>(cameras);
+	const [isLoading, setIsLoading] = useState(false);
+	const [syncError, setSyncError] = useState<string | null>(null);
 	const [search, setSearch] = useState("");
 	const [statusFilter, setStatusFilter] = useState<"all" | CameraStatus>("all");
 	const [locationFilter, setLocationFilter] = useState("all");
@@ -46,16 +105,42 @@ export default function CameraPanel({
 	const [activeFilterPicker, setActiveFilterPicker] = useState<CameraFilterTarget>(null);
 	const [modalOpen, setModalOpen] = useState(false);
 	const [editingId, setEditingId] = useState<string | null>(null);
-	const [form, setForm] = useState<Omit<CameraItem, "id">>({
+	const [form, setForm] = useState<Omit<CameraItem, "id" | "backendId">>({
 		name: "",
 		location: "Main Building",
 		status: "online",
 		lastActive: "2026-02-24 09:30",
 		onlineDuration: "0h 00m 00s",
 		activeRange: "24h",
-		footageUrl:
-			"https://images.pexels.com/photos/1118866/pexels-photo-1118866.jpeg?auto=compress&cs=tinysrgb&w=1600",
+		footageUrl: DEFAULT_FOOTAGE_URL,
 	});
+
+	const loadCamerasFromApi = useCallback(async () => {
+		if (!token) {
+			return;
+		}
+
+		setIsLoading(true);
+		setSyncError(null);
+		try {
+			const response = await listCameras(token);
+			setCameraRows(response.map(mapCameraDtoToItem));
+		} catch (error) {
+			const message = error instanceof ApiError ? error.message : "Failed to load cameras.";
+			setSyncError(message);
+		} finally {
+			setIsLoading(false);
+		}
+	}, [token]);
+
+	useEffect(() => {
+		if (!token) {
+			setSyncError("Sign in to load live camera data.");
+			return;
+		}
+
+		void loadCamerasFromApi();
+	}, [loadCamerasFromApi, token]);
 
 	const locationOptions = useMemo(() => {
 		return Array.from(new Set(cameraRows.map((camera) => camera.location))).sort();
@@ -111,8 +196,7 @@ export default function CameraPanel({
 			lastActive: "2026-02-24 09:30",
 			onlineDuration: "0h 00m 00s",
 			activeRange: "24h",
-			footageUrl:
-				"https://images.pexels.com/photos/1118866/pexels-photo-1118866.jpeg?auto=compress&cs=tinysrgb&w=1600",
+			footageUrl: DEFAULT_FOOTAGE_URL,
 		});
 		setModalOpen(true);
 	};
@@ -131,40 +215,76 @@ export default function CameraPanel({
 		setModalOpen(true);
 	};
 
-	const saveCamera = () => {
-		if (!form.name.trim() || !form.location.trim()) {
+	const saveCamera = async () => {
+		if (!token) {
+			Alert.alert("Not Signed In", "Please sign in first.");
 			return;
 		}
 
-		if (editingId) {
-			setCameraRows((prev) =>
-				prev.map((camera) => (camera.id === editingId ? { ...camera, ...form } : camera)),
-			);
-		} else {
-			const ids = cameraRows
-				.map((camera) => Number(camera.id.replace("CAM-", "")))
-				.filter((value) => !Number.isNaN(value));
-			const nextId = String((Math.max(0, ...ids) + 1)).padStart(3, "0");
-
-			setCameraRows((prev) => [
-				...prev,
-				{
-					id: `CAM-${nextId}`,
-					...form,
-				},
-			]);
+		if (!form.name.trim() || !form.location.trim()) {
+			Alert.alert("Validation", "Camera name and location are required.");
+			return;
 		}
 
-		setModalOpen(false);
+		const currentRow = editingId ? cameraRows.find((camera) => camera.id === editingId) : null;
+		const cameraCode = currentRow?.id || getNextCameraCode(cameraRows);
+		const payload: CameraPayload = {
+			camera_code: cameraCode,
+			name: form.name.trim(),
+			location: form.location.trim(),
+			status: form.status,
+			footage_url: form.footageUrl.trim(),
+		};
+
+		setIsLoading(true);
+		setSyncError(null);
+
+		try {
+			if (currentRow?.backendId) {
+				await updateCamera(token, currentRow.backendId, payload);
+			} else {
+				await createCamera(token, payload);
+			}
+
+			await loadCamerasFromApi();
+			setModalOpen(false);
+		} catch (error) {
+			const message = error instanceof ApiError ? error.message : "Failed to save camera.";
+			Alert.alert("Save Failed", message);
+		} finally {
+			setIsLoading(false);
+		}
 	};
 
-	const removeCamera = (id: string) => {
-		setCameraRows((prev) => prev.filter((camera) => camera.id !== id));
+	const removeCamera = async (camera: CameraItem) => {
+		if (!token) {
+			Alert.alert("Not Signed In", "Please sign in first.");
+			return;
+		}
+
+		if (!camera.backendId) {
+			setCameraRows((prev) => prev.filter((row) => row.id !== camera.id));
+			return;
+		}
+
+		setIsLoading(true);
+		setSyncError(null);
+		try {
+			await deleteCamera(token, camera.backendId);
+			await loadCamerasFromApi();
+		} catch (error) {
+			const message = error instanceof ApiError ? error.message : "Failed to delete camera.";
+			Alert.alert("Delete Failed", message);
+		} finally {
+			setIsLoading(false);
+		}
 	};
 
 	return (
 		<View style={styles.container}>
 			<Text style={styles.heading}>Camera List</Text>
+			{isLoading ? <Text style={{ color: "#475569", marginBottom: 8 }}>Syncing with backend...</Text> : null}
+			{syncError ? <Text style={{ color: "#b91c1c", marginBottom: 8 }}>{syncError}</Text> : null}
 
 			<View style={styles.filtersRow}>
 				<TextInput
@@ -207,7 +327,7 @@ export default function CameraPanel({
 								<TouchableOpacity style={styles.editButton} onPress={() => openEditModal(camera)}>
 									<Text style={styles.actionButtonText}>Edit</Text>
 								</TouchableOpacity>
-								<TouchableOpacity style={styles.deleteButton} onPress={() => removeCamera(camera.id)}>
+								<TouchableOpacity style={styles.deleteButton} onPress={() => void removeCamera(camera)}>
 									<Text style={styles.actionButtonText}>Delete</Text>
 								</TouchableOpacity>
 							</View>
@@ -248,7 +368,7 @@ export default function CameraPanel({
 									<TouchableOpacity style={styles.editButton} onPress={() => openEditModal(camera)}>
 										<Text style={styles.actionButtonText}>Edit</Text>
 									</TouchableOpacity>
-									<TouchableOpacity style={styles.deleteButton} onPress={() => removeCamera(camera.id)}>
+									<TouchableOpacity style={styles.deleteButton} onPress={() => void removeCamera(camera)}>
 										<Text style={styles.actionButtonText}>Delete</Text>
 									</TouchableOpacity>
 								</View>

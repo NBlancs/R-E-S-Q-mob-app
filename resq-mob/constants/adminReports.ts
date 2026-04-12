@@ -18,10 +18,12 @@ export interface ResponseStatusItem {
 }
 
 export interface IncidentReportItem {
+  backendId?: number;
+  incidentCode?: string;
   id: string;
-  type: "Fire" | "Gas";
+  type: "Fire" | "Gas" | "Smoke" | "Other";
   location: string;
-  method: "Heat Sensor" | "Camera AI" | "Gas Sensor";
+  method: "Heat Sensor" | "Camera AI" | "Gas Sensor" | "Manual";
   time: string;
   date: string;
   status: "resolved" | "investigating" | "open";

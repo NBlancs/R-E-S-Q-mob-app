@@ -1,10 +1,12 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Modal, Pressable, ScrollView, Text, TouchableOpacity, View, useWindowDimensions } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import {
   ADMIN_CAMERA_NOTIFICATIONS,
   type CameraDetectionNotification,
 } from "../../constants/adminCameras";
+import { useAuth } from "../../hooks/useAuth";
+import { listDetectionAlerts } from "../../services/api";
 import { headerStyles as styles } from "../../styles/components/admin/header";
 
 interface NotificationBellProps {
@@ -16,11 +18,33 @@ type UIAdminNotification = CameraDetectionNotification & { acknowledged: boolean
 export default function NotificationBell({
   notifications = ADMIN_CAMERA_NOTIFICATIONS,
 }: NotificationBellProps) {
+  const { token } = useAuth();
   const { width, height } = useWindowDimensions();
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<UIAdminNotification[]>(
     notifications.map((notification) => ({ ...notification, acknowledged: false })),
   );
+
+  useEffect(() => {
+    setItems(notifications.map((notification) => ({ ...notification, acknowledged: false })));
+  }, [notifications]);
+
+  useEffect(() => {
+    const loadNotifications = async () => {
+      if (!token) {
+        return;
+      }
+
+      try {
+        const liveAlerts = await listDetectionAlerts(token);
+        setItems(liveAlerts.map((notification) => ({ ...notification, acknowledged: false })));
+      } catch {
+        // Keep fallback items when live alerts fail.
+      }
+    };
+
+    void loadNotifications();
+  }, [token]);
 
   const unreadCount = items.length;
 

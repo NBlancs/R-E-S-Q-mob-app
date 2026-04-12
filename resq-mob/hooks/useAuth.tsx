@@ -1,129 +1,113 @@
 // hooks/useAuth.tsx
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { ApiError, fetchProfile, loginWithEmail, type UserProfile } from "../services/api";
 
 type UserRole = "admin" | "bfp" | null;
-type ManagedRole = "admin" | "bfp";
 
-interface RoleCredentials {
-  email: string;
-  password: string;
+const AUTH_SESSION_STORAGE_KEY = "resq:auth:session";
+
+interface StoredAuthSession {
+  token: string;
+  profile: UserProfile;
 }
 
-type CredentialsMap = Record<ManagedRole, RoleCredentials>;
-
-const DEFAULT_CREDENTIALS: CredentialsMap = {
-  admin: {
-    email: "admin@gmail.com",
-    password: "admin123",
-  },
-  bfp: {
-    email: "bfp@gmail.com",
-    password: "bfp123",
-  },
-};
+interface LoginResult {
+  success: boolean;
+  message: string;
+}
 
 interface AuthContextProps {
+  isLoading: boolean;
   userRole: UserRole;
-  login: (email: string, password: string) => boolean;
+  token: string | null;
+  profile: UserProfile | null;
+  login: (email: string, password: string) => Promise<LoginResult>;
   logout: () => void;
-  credentials: CredentialsMap;
-  updateCredentials: (params: {
-    role: ManagedRole;
-    currentPassword: string;
-    newEmail?: string;
-    newPassword?: string;
-  }) => { success: boolean; message: string };
 }
 
 const AuthContext = createContext<AuthContextProps>({
+  isLoading: true,
   userRole: null,
-  login: () => false,
+  token: null,
+  profile: null,
+  login: async () => ({ success: false, message: "Auth context unavailable" }),
   logout: () => {},
-  credentials: DEFAULT_CREDENTIALS,
-  updateCredentials: () => ({ success: false, message: "Auth context unavailable" }),
 });
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const [isLoading, setIsLoading] = useState(true);
   const [userRole, setUserRole] = useState<UserRole>(null);
-  const [credentials, setCredentials] = useState<CredentialsMap>(DEFAULT_CREDENTIALS);
+  const [token, setToken] = useState<string | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
 
   useEffect(() => {
-    const loadCredentials = async () => {
+    const hydrateSession = async () => {
       try {
-        const raw = await AsyncStorage.getItem("resq:auth:credentials");
+        const raw = await AsyncStorage.getItem(AUTH_SESSION_STORAGE_KEY);
         if (!raw) {
+          setIsLoading(false);
           return;
         }
 
-        const parsed = JSON.parse(raw) as Partial<CredentialsMap>;
-        setCredentials((prev) => ({
-          admin: {
-            email: parsed.admin?.email || prev.admin.email,
-            password: parsed.admin?.password || prev.admin.password,
-          },
-          bfp: {
-            email: parsed.bfp?.email || prev.bfp.email,
-            password: parsed.bfp?.password || prev.bfp.password,
-          },
-        }));
+        const parsed = JSON.parse(raw) as StoredAuthSession;
+        const latestProfile = await fetchProfile(parsed.token);
+
+        setToken(parsed.token);
+        setProfile(latestProfile);
+        setUserRole(latestProfile.role);
       } catch {
-        // Ignore malformed credential cache and keep defaults.
+        await AsyncStorage.removeItem(AUTH_SESSION_STORAGE_KEY);
+        setToken(null);
+        setProfile(null);
+        setUserRole(null);
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    void loadCredentials();
+    void hydrateSession();
   }, []);
 
-  const persistCredentials = async (next: CredentialsMap) => {
+  const persistSession = async (nextSession: StoredAuthSession) => {
     try {
-      await AsyncStorage.setItem("resq:auth:credentials", JSON.stringify(next));
+      await AsyncStorage.setItem(AUTH_SESSION_STORAGE_KEY, JSON.stringify(nextSession));
     } catch {
-      // Keep session state even if persistence fails.
+      // Keep active session in memory even if persistence fails.
     }
   };
 
-  const login = (email: string, password: string) => {
-    if (email === credentials.admin.email && password === credentials.admin.password) {
-      setUserRole("admin");
-      return true;
-    } else if (email === credentials.bfp.email && password === credentials.bfp.password) {
-      setUserRole("bfp");
-      return true;
+  const login: AuthContextProps["login"] = async (email: string, password: string) => {
+    try {
+      const response = await loginWithEmail({ email: email.trim(), password });
+      const session: StoredAuthSession = {
+        token: response.token,
+        profile: response.user,
+      };
+
+      setToken(response.token);
+      setProfile(response.user);
+      setUserRole(response.user.role);
+      await persistSession(session);
+
+      return { success: true, message: response.message || "Login successful." };
+    } catch (error) {
+      if (error instanceof ApiError) {
+        return { success: false, message: error.message };
+      }
+      return { success: false, message: "Unable to connect to the server." };
     }
-    return false; // invalid credentials
   };
 
   const logout = () => {
+    void AsyncStorage.removeItem(AUTH_SESSION_STORAGE_KEY);
+    setToken(null);
+    setProfile(null);
     setUserRole(null);
   };
 
-  const updateCredentials: AuthContextProps["updateCredentials"] = ({
-    role,
-    currentPassword,
-    newEmail,
-    newPassword,
-  }) => {
-    const current = credentials[role];
-    if (current.password !== currentPassword) {
-      return { success: false, message: "Current password is incorrect." };
-    }
-
-    const next: CredentialsMap = {
-      ...credentials,
-      [role]: {
-        email: (newEmail || current.email).trim(),
-        password: (newPassword || current.password).trim(),
-      },
-    };
-
-    setCredentials(next);
-    void persistCredentials(next);
-    return { success: true, message: "Credentials updated." };
-  };
-
   return (
-    <AuthContext.Provider value={{ userRole, login, logout, credentials, updateCredentials }}>
+    <AuthContext.Provider value={{ isLoading, userRole, token, profile, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
