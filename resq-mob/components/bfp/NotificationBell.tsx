@@ -51,7 +51,7 @@ export default function NotificationBell({
   return (
     <View style={styles.notificationsRoot}>
       <TouchableOpacity style={styles.notificationButton} onPress={() => setOpen((prev) => !prev)}>
-        <Ionicons name="notifications" size={18} color="#ffffff" />
+        <Ionicons name="notifications" size={18} color="#5b4040" />
         {unreadCount > 0 ? (
           <View style={styles.notificationBadge}>
             <Text style={styles.notificationBadgeText}>{unreadCount}</Text>

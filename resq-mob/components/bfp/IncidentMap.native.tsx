@@ -527,6 +527,7 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     borderWidth: 1,
     borderColor: "#d0d7de",
+    backgroundColor: "#f5f8fa",
   },
   map: {
     flex: 1,
